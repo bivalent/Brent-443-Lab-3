@@ -56,7 +56,7 @@ public class Brent443Lab3 {
         
         try{
             String sCurrentLine;
-            br = new BufferedReader(new FileReader("test/password.txt"));
+            br = new BufferedReader(new FileReader("input/password.txt"));
             
             while((sCurrentLine = br.readLine()) != null)
             {
@@ -105,7 +105,7 @@ public class Brent443Lab3 {
         MessageDigest mDigest = MessageDigest.getInstance("SHA1");
         
         try{            
-            br = new BufferedReader(new FileReader("test/english.0"));
+            br = new BufferedReader(new FileReader("input/english.0"));
             String dictWord = "";
             String dictRev = "";
             String noVowels = "";
@@ -118,14 +118,14 @@ public class Brent443Lab3 {
                 // original word hashes             
                 byte[] result = mDigest.digest(dictWord.getBytes());
                 hash = DatatypeConverter.printHexBinary(result);                      
-                p2Hash.put(hash, dictWord);
+                p2Hash.put(hash.toLowerCase(), dictWord);
                 
                 for(String salt : salts) // "for each salt in the salts arrayL"
                 {
                     String saltedP = salt + dictWord;
                     result = mDigest.digest(saltedP.getBytes());
                     hash = DatatypeConverter.printHexBinary(result);
-                    p2HashSalted.put(hash, dictWord);
+                    p2HashSalted.put(hash.toLowerCase(), dictWord);
                 }
                 
                // reversed word hashes
@@ -133,14 +133,14 @@ public class Brent443Lab3 {
                 
                 result = mDigest.digest(dictRev.getBytes());
                 hash = DatatypeConverter.printHexBinary(result);
-                p2Hash.put(hash, dictRev);
+                p2Hash.put(hash.toLowerCase(), dictRev);
                 
                 for(String salt : salts) // "for each salt in the salts arrayL"
                 {
                     String saltedP = salt + dictRev;
                     result = mDigest.digest(saltedP.getBytes());
                     hash = DatatypeConverter.printHexBinary(result);
-                    p2HashSalted.put(hash, dictRev);
+                    p2HashSalted.put(hash.toLowerCase(), dictRev);
                 }
                 
                 // no vowel word hashes
@@ -148,14 +148,14 @@ public class Brent443Lab3 {
                 
                 result = mDigest.digest(noVowels.getBytes());
                 hash = DatatypeConverter.printHexBinary(result);
-                p2Hash.put(hash, noVowels);
+                p2Hash.put(hash.toLowerCase(), noVowels);
                 
                 for(String salt : salts) // "for each salt in the salts arrayL"
                 {
                     String saltedP = salt + noVowels;
                     result = mDigest.digest(saltedP.getBytes());
                     hash = DatatypeConverter.printHexBinary(result);
-                    p2HashSalted.put(hash, noVowels);
+                    p2HashSalted.put(hash.toLowerCase(), noVowels);
                 }
                 
             }
@@ -232,7 +232,7 @@ public class Brent443Lab3 {
         
         try 
         {           
-            PrintWriter writer = new PrintWriter("passwordOutput.txt", "UTF-8");
+            PrintWriter writer = new PrintWriter("output/passwordOutput.txt", "UTF-8");
             
             for (Map.Entry<String, String> entry : accountsPlain.entrySet())
             {
