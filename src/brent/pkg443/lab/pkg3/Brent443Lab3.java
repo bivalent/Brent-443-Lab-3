@@ -5,11 +5,14 @@ import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.xml.bind.DatatypeConverter;
 
 /**
  *
@@ -35,6 +38,9 @@ public class Brent443Lab3 {
         Map<String, String> accountsHash = new HashMap<String, String>();
         Map<String, String> accountsSaltHash = new HashMap<String, String>();
         
+        // used for output.
+        Map<String, String> accountsPlain = new HashMap<String, String>();
+        
         // used to easily generate hashes with salts.
         ArrayList<String> salts = new ArrayList<String>();
         
@@ -50,7 +56,7 @@ public class Brent443Lab3 {
         
         try{
             String sCurrentLine;
-            br = new BufferedReader(new FileReader("password.txt"));
+            br = new BufferedReader(new FileReader("test/password.txt"));
             
             while((sCurrentLine = br.readLine()) != null)
             {
@@ -99,7 +105,7 @@ public class Brent443Lab3 {
         MessageDigest mDigest = MessageDigest.getInstance("SHA1");
         
         try{            
-            br = new BufferedReader(new FileReader("english.0"));
+            br = new BufferedReader(new FileReader("test/english.0"));
             String dictWord = "";
             String dictRev = "";
             String noVowels = "";
@@ -111,45 +117,45 @@ public class Brent443Lab3 {
                 
                 // original word hashes             
                 byte[] result = mDigest.digest(dictWord.getBytes());
-                hash = new String(result, "UTF-8");                           
+                hash = DatatypeConverter.printHexBinary(result);                      
                 p2Hash.put(hash, dictWord);
                 
                 for(String salt : salts) // "for each salt in the salts arrayL"
                 {
                     String saltedP = salt + dictWord;
                     result = mDigest.digest(saltedP.getBytes());
-                    hash = new String(result, "UTF-8");
-                    p2HashSalted.put(hash, saltedP);
+                    hash = DatatypeConverter.printHexBinary(result);
+                    p2HashSalted.put(hash, dictWord);
                 }
                 
                // reversed word hashes
                 dictRev = new StringBuilder(dictWord).reverse().toString();
                 
                 result = mDigest.digest(dictRev.getBytes());
-                hash = new String(result, "UTF-8"); 
+                hash = DatatypeConverter.printHexBinary(result);
                 p2Hash.put(hash, dictRev);
                 
                 for(String salt : salts) // "for each salt in the salts arrayL"
                 {
                     String saltedP = salt + dictRev;
                     result = mDigest.digest(saltedP.getBytes());
-                    hash = new String(result, "UTF-8");
-                    p2HashSalted.put(hash, saltedP);
+                    hash = DatatypeConverter.printHexBinary(result);
+                    p2HashSalted.put(hash, dictRev);
                 }
                 
                 // no vowel word hashes
                 noVowels = dictWord.replaceAll("[AEIOUaeiou]", "");
                 
                 result = mDigest.digest(noVowels.getBytes());
-                hash = new String(result, "UTF-8"); 
+                hash = DatatypeConverter.printHexBinary(result);
                 p2Hash.put(hash, noVowels);
                 
                 for(String salt : salts) // "for each salt in the salts arrayL"
                 {
                     String saltedP = salt + noVowels;
                     result = mDigest.digest(saltedP.getBytes());
-                    hash = new String(result, "UTF-8");
-                    p2HashSalted.put(hash, saltedP);
+                    hash = DatatypeConverter.printHexBinary(result);
+                    p2HashSalted.put(hash, noVowels);
                 }
                 
             }
@@ -168,12 +174,12 @@ public class Brent443Lab3 {
             }
         }
      
-        // ------------------------ 3) Compare Hashes, find passwords.- ----------------------------
+// ------------------------ 3) Compare Hashes, find passwords.- ----------------------------
         /* VARIABLE REFERENCES (So I don't have to scroll)
         
             // stores usernames and hashed passwords
             Map accountsHash
-
+            Map accountsSaltHash
             // used to easily generate hashes with salts.
             ArrayList salts
 
@@ -186,7 +192,65 @@ public class Brent443Lab3 {
         */
         
         //iterate through accountsHash (non salted passwords). Write text file of username-passwords
+        System.out.println("First, cracking non-salted passwords.\n");
+        String username = "";
+        String hashPass = "";
+        String plainPass = "";
         
-    }
-    
+        for (Map.Entry<String, String> entry : accountsHash.entrySet())
+        {
+            username = entry.getKey();
+            hashPass = entry.getValue();
+            
+            if(p2Hash.containsKey(hashPass)) // found a match.
+            {
+                plainPass = p2Hash.get(hashPass);
+                accountsPlain.put(username, plainPass);
+            }
+            else
+                System.out.println("Hash not found. User: " + username + "\nPassword: " + hashPass + ".\n");
+        }
+        System.out.println("Now cracking salted passwords.\n");
+        // iterate through salted passwords.
+        for (Map.Entry<String, String> entry : accountsSaltHash.entrySet())
+        {
+            username = entry.getKey();
+            hashPass = entry.getValue(); 
+            
+            
+            if(p2HashSalted.containsKey(hashPass))
+            {
+                plainPass = p2Hash.get(hashPass);
+                accountsPlain.put(username, plainPass);
+            }
+            else
+                System.out.println("Hash not found. User: " + username + "\nPassword: " + hashPass + ".\n");
+        }
+        
+// ---------- 4) Output Username/Password (plaintext) Combinations -------------
+        System.out.println("Users and their passwords: \n");
+        
+        try 
+        {           
+            PrintWriter writer = new PrintWriter("passwordOutput.txt", "UTF-8");
+            
+            for (Map.Entry<String, String> entry : accountsPlain.entrySet())
+            {
+                username = entry.getKey();
+                plainPass = entry.getValue();
+                
+                System.out.println(username + "\t" + plainPass);
+                writer.println(username + "\t" + plainPass);
+            }          
+          
+            writer.close();
+        } catch (FileNotFoundException ex)
+        {
+            Logger.getLogger(Brent443Lab3.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (UnsupportedEncodingException ex)
+        {
+            Logger.getLogger(Brent443Lab3.class.getName()).log(Level.SEVERE, null, ex);
+        }      
+        
+    }    
 }
